@@ -1,12 +1,19 @@
 from django.contrib.auth import get_user_model
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.signing import (
     BadSignature,
     SignatureExpired,
+    TimestampSigner
 )
+from django.utils.translation import gettext_lazy as _
 
 from rest_framework import authentication
 from rest_framework import exceptions
+
+
+def get_stateless_auth_token_signer():
+    return TimestampSigner(salt='stateless_auth_token')
 
 
 class StatelessTokenAuthentication(authentication.BaseAuthentication):
@@ -67,7 +74,7 @@ class StatelessTokenAuthentication(authentication.BaseAuthentication):
         # validate stateless token
         try:
             signer = get_stateless_auth_token_signer()
-            pk = signer.unsign(token, max_age=max_age)
+            pk = signer.unsign(token, max_age=self.max_age)
         except BadSignature:
             raise exceptions.AuthenticationFailed(auth_failed_msg)
         except SignatureExpired:
@@ -77,13 +84,13 @@ class StatelessTokenAuthentication(authentication.BaseAuthentication):
         if isinstance(model, settings.AUTH_USER_MODEL):
             try:
                 user = model.objects.get(pk=pk, is_active=True)
-            except DoesNotExist:
+            except ObjectDoesNotExist:
                 raise exceptions.AuthenticationFailed(auth_failed_msg)
             return user, token
         else:
             try:
                 model = model.objects.get(pk=pk)
                 user = get_user_model().objects.get(id=model.user_id, is_active=True)
-            except DoesNotExist:
+            except ObjectDoesNotExist:
                 raise exceptions.AuthenticationFailed(auth_failed_msg)
             return user, token

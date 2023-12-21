@@ -19,5 +19,5 @@ def render_messages(rpath, filename, context={}):
         # txt message
         render_to_string(f"{rpath}/{filename}.txt", context),
         # html message
-        render_to_string(f"{rpath}/{fielname}.html", context),
+        render_to_string(f"{rpath}/{filename}.html", context),
     )

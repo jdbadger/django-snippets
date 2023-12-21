@@ -1,15 +1,7 @@
-from django.core.signing import (
-    TimestampSigner,
-)
-
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.response import Response
 
-
-def get_stateless_auth_token_signer():
-    return TimestampSigner(salt='stateless_auth_token')
-
-# views.py
+from .backends import get_stateless_auth_token_signer
 
 
 class ObtainStatelessAuthToken(ObtainAuthToken):
@@ -24,7 +16,7 @@ class ObtainStatelessAuthToken(ObtainAuthToken):
         user = serializer.validated_data['user']
 
         # create stateless auth token
-        signer = TimestampSigner(salt='stateless_auth_token')
+        signer = get_stateless_auth_token_signer()
         token = signer.sign(user.pk)
 
         # return response
